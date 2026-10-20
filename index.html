@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0B2A4A">
+<meta name="description" content="Calculadora de margem de frete, alíquotas de ICMS e frete spot — Grupo Los">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/favicon.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Frete Los">
+<title>Calculadora de Margem — Grupo Los</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap');
+
+  :root{
+    --navy: #0B2A4A;
+    --navy-deep: #081D33;
+    --red: #C1272D;
+    --gray: #8B93A0;
+    --good: #2E7D5B;
+    --bad: #C1272D;
+    --warn: #B8860B;
+    --bg: #F4F5F7;
+    --card: #FFFFFF;
+    --line: #E0E3E8;
+    --text: #16232F;
+    --text-soft: #5D6B78;
+    --header-text: #16232F;
+    --hero-img: url('fundo.jpg');
+  }
+
+  [data-theme="dark"]{
+    --bg: #081D33;
+    --card: #0F2E4F;
+    --line: #1E3F5C;
+    --text: #EAF0F6;
+    --text-soft: #A9BAC9;
+    --header-text: #FFFFFF;
+    --good: #4FBF8B;
+    --bad: #FF6B6B;
+    --warn: #F2C14E;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html{
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body{
+    margin:0;
+    background: var(--bg);
+    font-family: 'Inter', sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0 0 40px;
+    transition: background 0.25s, color 0.25s;
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+
+  .hero{
+    position: relative;
+    padding: calc(28px + env(safe-area-inset-top)) 16px 120px;
+    background-image:
+      linear-gradient(180deg, rgba(8,29,51,0.55) 0%, rgba(8,29,51,0.35) 45%, var(--bg) 100%),
+      var(--hero-img);
+    background-size: cover;
+    background-position: center 35%;
+  }
+
+  [data-theme="light"] .hero{
+    background-image:
+      linear-gradient(180deg, rgba(8,29,51,0.6) 0%, rgba(11,42,74,0.4) 45%, var(--bg) 100%),
+      var(--hero-img);
+  }
+
+  .hero-inner{
+    background: rgba(8,29,51,0.35);
+    backdrop-filter: blur(2px);
+    border-radius: 14px;
+    padding: 10px 16px;
+    max-width: 920px;
+    margin: 0 auto;
+    display:flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .brand{
+    display:flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .brand img{
+    height: 42px;
+    width: auto;
+    display:block;
+  }
+
+  .brand-text .eyebrow{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #C7D4E0;
+  }
+
+  .brand-text h1{
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: #FFFFFF;
+    margin: 2px 0 0;
+    letter-spacing: -0.01em;
+  }
+
+  .theme-toggle{
+    display:flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 20px;
+    padding: 6px 6px;
+  }
+
+  .theme-toggle button{
+    border: none;
+    background: transparent;
+    color: #EAF0F6;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .theme-toggle button.active{
+    background: #FFFFFF;
+    color: var(--navy-deep);
+  }
+
+  .wrap{
+    max-width: 920px;
+    margin: -20px auto 0;
+    padding: 0 16px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .lane{
+    height: 3px;
+    background-image: linear-gradient(to right, var(--red) 60%, transparent 0%);
+    background-size: 20px 3px;
+    margin: 0 0 22px;
+    opacity: 0.9;
+  }
+
+  .grid{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .tabs{
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .tabs button{
+    flex: 1;
+    padding: 12px 16px;
+    border: 1.5px solid var(--line);
+    background: var(--card);
+    color: var(--text-soft);
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-radius: 9px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .tabs button.active{
+    background: var(--navy);
+    border-color: var(--navy);
+    color: #FFFFFF;
+  }
+
+  [data-theme="dark"] .tabs button.active{
+    background: #7FB4E0;
+    border-color: #7FB4E0;
+    color: var(--navy-deep);
+  }
+
+  .tab-content{ display: none; }
+  .tab-content.active{ display: block; }
+
+  .aliq-tables{
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  /* ===== Matriz de alíquotas ===== */
+  .matriz-wrap{ grid-column: 1 / -1; }
+  .matriz-scroll{ overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .matriz{ border-collapse: collapse; font-family: 'IBM Plex Mono', monospace; font-size: 12px; min-width: 860px; width: 100%; }
+  .matriz th, .matriz td{ padding: 5px 3px; text-align: center; border: 1px solid var(--line); }
+  .matriz thead th{ background: var(--navy); color: #fff; position: sticky; top: 0; }
+  .matriz tbody th{ background: var(--navy); color: #fff; position: sticky; left: 0; }
+  .matriz td{ cursor: pointer; }
+  .matriz td:hover{ outline: 2px solid var(--red); outline-offset: -2px; }
+  .matriz td.interna{ background: var(--red); color: #fff; font-weight: 600; }
+  .matriz td.sete{ background: rgba(46,125,91,0.15); }
+  .matriz td.imp{ color: var(--text-soft); }
+  .matriz-legenda{ display: flex; flex-wrap: wrap; gap: 14px; margin-top: 12px; font-size: 12px; color: var(--text-soft); }
+  .matriz-legenda .lg{ display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: middle; margin-right: 4px; }
+  .matriz-legenda .lg.interna{ background: var(--red); }
+  .matriz-legenda .lg.sete{ background: rgba(46,125,91,0.4); }
+
+  /* ===== Destaque de linha/coluna (cruz) ===== */
+  :root{ --hl: #E8892B; --hl-soft: rgba(232,137,43,0.30); --hl-hover: rgba(11,42,74,0.09); }
+  [data-theme="dark"]{ --hl-soft: rgba(232,137,43,0.32); --hl-hover: rgba(255,255,255,0.07); }
+  .matriz td.hv{ box-shadow: inset 0 0 0 999px var(--hl-hover); }
+  .matriz td.sel{ box-shadow: inset 0 0 0 999px var(--hl-soft); }
+  .matriz th.sel{ background: var(--hl); color: #fff; }
+  .matriz tbody td.cruz{ background: var(--hl); color: #fff; font-weight: 700; font-size: 14px; box-shadow: 0 0 0 3px var(--hl), 0 4px 12px rgba(0,0,0,0.35); outline: 2px solid var(--navy); outline-offset: -2px; position: relative; z-index: 1; }
+  .matriz thead th:first-child{ z-index: 3; left: 0; }
+  .matriz thead th.canto{ font-size: 9px; line-height: 1.15; }
+  .matriz thead th.canto b{ color: var(--hl); display: block; }
+
+  /* ===== Aba Frete Spot ===== */
+  .antt-banner{ display:flex; align-items:center; justify-content: space-between; gap: 16px; flex-wrap: wrap; background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--red); border-radius: 10px; padding: 16px 20px; margin-bottom: 20px; }
+  .antt-banner p{ margin: 0; font-size: 13.5px; color: var(--text-soft); max-width: 560px; }
+  .antt-banner strong{ color: var(--text); }
+  .antt-btn{ flex-shrink: 0; display:inline-flex; align-items:center; gap: 8px; background: var(--navy); color: #FFFFFF; text-decoration: none; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 13px; padding: 11px 18px; border-radius: 8px; }
+  .antt-btn:hover{ opacity: 0.88; }
+  .field-hint{ font-size: 12px; color: var(--text-soft); margin-top: 6px; }
+  .big-number.otm{ color: var(--navy); }
+  [data-theme="dark"] .big-number.otm{ color: #7FB4E0; }
+  @media (max-width: 760px){
+    .antt-banner{ flex-direction: column; align-items: flex-start; }
+    .antt-btn{ width: 100%; justify-content: center; }
+  }
+
+  .aliq-filtros{ display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end; margin-bottom: 16px; }
+  .aliq-filtros .field{ margin-bottom: 0; }
+  .btn{ padding: 11px 18px; border-radius: 8px; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 14px; cursor: pointer; border: 1.5px solid var(--hl); background: var(--card); color: var(--hl); white-space: nowrap; }
+  .btn.cheio{ background: var(--hl); color: #fff; }
+  .aliq-resultado{ display: none; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 14px 18px; margin-bottom: 16px; border-radius: 10px; border: 1.5px solid var(--hl); background: var(--hl-soft); }
+  .aliq-resultado.on{ display: flex; }
+  .aliq-resultado .rota{ font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 15px; color: var(--text); }
+  .aliq-resultado .valor{ font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 26px; color: var(--hl); margin-left: 10px; }
+  @media (max-width: 760px){
+    .aliq-filtros{ grid-template-columns: 1fr 1fr; }
+    .aliq-filtros .btn{ grid-column: 1 / -1; }
+  }
+
+  .card{
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 10px 30px rgba(8,29,51,0.06);
+    transition: background 0.25s, border-color 0.25s;
+  }
+
+  .card h2{
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--navy);
+    margin: 0 0 18px;
+  }
+
+  [data-theme="dark"] .card h2{ color: #7FB4E0; }
+
+  .field{
+    margin-bottom: 16px;
+  }
+
+  .field label{
+    display:block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-soft);
+    margin-bottom: 6px;
+  }
+
+  .field input, .field select{
+    width: 100%;
+    padding: 11px 12px;
+    border: 1.5px solid var(--line);
+    border-radius: 7px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+    background: var(--bg);
+    transition: border-color 0.15s;
+  }
+
+  [data-theme="dark"] .field input, [data-theme="dark"] .field select{
+    background: #0B2A4A;
+  }
+
+  .field select{
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+  }
+
+  .field input:focus, .field select:focus{
+    outline: none;
+    border-color: var(--red);
+  }
+
+  .two-col{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .aliquota-pill{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--navy);
+    background: rgba(11,42,74,0.08);
+    border-radius: 20px;
+    padding: 5px 12px;
+    margin-top: 4px;
+  }
+
+  [data-theme="dark"] .aliquota-pill{ color: #7FB4E0; background: rgba(127,180,224,0.12); }
+
+  .breakdown{
+    margin-top: 6px;
+  }
+
+  .row{
+    display:flex;
+    justify-content: space-between;
+    padding: 9px 0;
+    border-bottom: 1px dashed var(--line);
+    font-size: 14px;
+  }
+
+  .row:last-child{ border-bottom: none; }
+
+  .row .label{ color: var(--text-soft); }
+  .row .value{ font-family: 'IBM Plex Mono', monospace; font-weight: 600; color: var(--text); }
+
+  .row.total .value{ color: var(--navy); font-size: 15px; }
+  [data-theme="dark"] .row.total .value{ color: #7FB4E0; }
+
+  .status-panel{
+    margin-top: 18px;
+    border-radius: 10px;
+    padding: 20px;
+    border: 1.5px solid var(--line);
+    background: var(--bg);
+    transition: all 0.2s;
+  }
+
+  .status-panel.good{ background: rgba(46,125,91,0.1); border-color: var(--good); }
+  .status-panel.warn{ background: rgba(184,134,11,0.1); border-color: var(--warn); }
+  .status-panel.bad{ background: rgba(193,39,45,0.1); border-color: var(--bad); }
+
+  .status-top{
+    display:flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .dot{
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--text-soft);
+  }
+  .good .dot{ background: var(--good); }
+  .warn .dot{ background: var(--warn); }
+  .bad .dot{ background: var(--bad); }
+
+  .status-title{
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 17px;
+    color: var(--text);
+  }
+  .good .status-title{ color: var(--good); }
+  .warn .status-title{ color: var(--warn); }
+  .bad .status-title{ color: var(--bad); }
+
+  .status-detail{
+    font-size: 13.5px;
+    color: var(--text-soft);
+    line-height: 1.5;
+  }
+
+  .big-number{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 32px;
+    font-weight: 600;
+    margin: 6px 0 2px;
+  }
+  .good .big-number{ color: var(--good); }
+  .warn .big-number{ color: var(--warn); }
+  .bad .big-number{ color: var(--bad); }
+
+  footer{
+    margin-top: 24px;
+    font-size: 12px;
+    color: var(--text-soft);
+    text-align: center;
+  }
+
+  @media (max-width: 760px){
+    .grid{ grid-template-columns: 1fr; }
+    .hero-inner{ justify-content: center; text-align:center; }
+    .hero{ padding: 20px 12px 90px; }
+    .brand-text h1{ font-size: 18px; }
+    .brand img{ height: 34px; }
+    .wrap{ padding: 0 12px; }
+    .card{ padding: 18px; }
+    .two-col{ grid-template-columns: 1fr; gap: 16px; }
+    .field input, .field select{ font-size: 16px; }
+    .big-number{ font-size: 26px; }
+    .theme-toggle button{ padding: 6px 9px; font-size: 11px; }
+    .tabs{ flex-direction: column; }
+    .tabs button{ width: 100%; }
+  }
+</style>
+</head>
+<body data-theme="light">
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="brand">
+      <img src="logo.png" alt="Grupo Los">
+      <div class="brand-text">
+        <div class="eyebrow">OTM · ICMS · PIS/COFINS</div>
+        <h1>Calculadora de Margem de Frete</h1>
+      </div>
+    </div>
+    <div class="theme-toggle">
+      <button id="btnLight" class="active">☀ Claro</button>
+      <button id="btnDark">🌙 Escuro</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="lane"></div>
+
+  <div class="tabs">
+    <button id="tabBtnCalc" class="active">Calculadora</button>
+    <button id="tabBtnAliq">Alíquotas de ICMS</button>
+    <button id="tabBtnSpot">Frete Spot</button>
+  </div>
+
+  <div class="tab-content active" id="tabCalculadora">
+  <div class="grid">
+
+    <div class="card">
+      <h2>Dados do frete</h2>
+
+      <div class="field">
+        <label for="otm">Valor OTM (frete bruto)</label>
+        <input type="text" id="otm" inputmode="decimal" placeholder="Ex: 24500,00">
+      </div>
+
+      <div class="two-col">
+        <div class="field">
+          <label for="origem">Origem</label>
+          <select id="origem"></select>
+        </div>
+        <div class="field">
+          <label for="destino">Destino</label>
+          <input type="text" id="destino" list="destinoList" autocomplete="off" placeholder="Digite o estado...">
+          <datalist id="destinoList"></datalist>
+        </div>
+      </div>
+      <div class="aliquota-pill" id="aliquotaPill">ICMS: —</div>
+
+      <div class="field" style="margin-top:20px;">
+        <label for="motorista">Quanto quer pagar ao motorista</label>
+        <input type="text" id="motorista" inputmode="decimal" placeholder="Ex: 21000,00">
+      </div>
+
+      <div class="breakdown" id="breakdown"></div>
+    </div>
+
+    <div class="card">
+      <h2>Resultado</h2>
+      <div id="statusPanel" class="status-panel">
+        <div class="status-top">
+          <div class="dot"></div>
+          <div class="status-title">Preencha os campos</div>
+        </div>
+        <div class="status-detail">Informe o valor OTM, origem/destino e quanto pretende pagar ao motorista.</div>
+      </div>
+
+      <div class="breakdown" style="margin-top:18px;" id="resultBreakdown"></div>
+    </div>
+
+  </div>
+  </div>
+
+  <div class="tab-content" id="tabAliquotas">
+    <div class="aliq-filtros">
+      <div class="field">
+        <label for="selOrigemAliq">UF de origem (de onde sai)</label>
+        <select id="selOrigemAliq"><option value="">Selecione</option></select>
+      </div>
+      <div class="field">
+        <label for="selDestinoAliq">UF de destino (para onde vai)</label>
+        <select id="selDestinoAliq"><option value="">Selecione</option></select>
+      </div>
+      <button class="btn" id="btnLimparAliq">↺ Limpar</button>
+    </div>
+    <div class="aliq-resultado" id="aliqResultado">
+      <div><span class="rota" id="aliqRota"></span><span class="valor" id="aliqValor"></span></div>
+      <button class="btn cheio" id="btnUsarRota">Calcular com esta rota →</button>
+    </div>
+    <div class="aliq-tables" id="aliqTables"></div>
+  </div>
+
+  <div class="tab-content" id="tabSpot">
+    <div class="antt-banner">
+      <p>Antes de fechar o valor com o motorista, confira se ele respeita o <strong>piso mínimo de frete</strong> definido pela ANTT para a rota e o tipo de carga.</p>
+      <a class="antt-btn" href="https://calculadorafrete.antt.gov.br/" target="_blank" rel="noopener">Consultar piso ANTT</a>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>Dados do frete spot</h2>
+
+        <div class="two-col">
+          <div class="field">
+            <label for="spotOrigem">Origem</label>
+            <select id="spotOrigem"></select>
+          </div>
+          <div class="field">
+            <label for="spotDestino">Destino</label>
+            <select id="spotDestino"></select>
+          </div>
+        </div>
+        <div class="aliquota-pill" id="spotPill">ICMS: —</div>
+
+        <div class="field" style="margin-top:20px;">
+          <label for="spotMotorista">Valor a pagar ao motorista</label>
+          <input type="text" id="spotMotorista" inputmode="decimal" placeholder="Ex: 21000,00">
+        </div>
+
+        <div class="two-col">
+          <div class="field">
+            <label for="spotMargem">Margem desejada (%)</label>
+            <input type="text" id="spotMargem" inputmode="decimal" value="8">
+          </div>
+          <div class="field">
+            <label for="spotFator">Ou digite o Fator</label>
+            <input type="text" id="spotFator" inputmode="decimal" placeholder="Ex: 0,88">
+          </div>
+        </div>
+        <div class="field-hint">Preencha um dos dois campos acima — o outro se ajusta sozinho. Padrão da empresa é 8% de margem; em casos liberados, pode baixar até 1%.</div>
+      </div>
+
+      <div class="card">
+        <h2>OTM sugerido</h2>
+        <div id="spotStatus" class="status-panel">
+          <div class="status-top"><div class="dot"></div><div class="status-title">Preencha os campos</div></div>
+          <div class="status-detail">Informe o valor a pagar ao motorista para calcular o OTM.</div>
+        </div>
+        <div class="breakdown" style="margin-top:18px;" id="spotBreakdown"></div>
+      </div>
+    </div>
+    <div class="field-hint" style="text-align:center;margin-top:14px;">Fator = 1 − (PIS/COFINS + ICMS + Margem) · Valor CTE = Motorista ÷ Fator · OTM = Valor CTE × (1 − ICMS)</div>
+  </div>
+
+  <footer>Margem mínima de referência: 8% sobre o Frete Bruto · PIS/COFINS fixo em 9,25% · Grupo Los — Soluções em Transporte e Logística</footer>
+</div>
+
+<script>
+// ===== Tabela de ICMS (origem × destino) =====
+const UFS = ['AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RN','RS','RJ','RO','RR','SC','SP','SE','TO'];
+
+const NOMES_UF = {AC:'Acre',AL:'Alagoas',AM:'Amazonas',AP:'Amapá',BA:'Bahia',CE:'Ceará',DF:'Distrito Federal',ES:'Espírito Santo',GO:'Goiás',MA:'Maranhão',MT:'Mato Grosso',MS:'Mato Grosso do Sul',MG:'Minas Gerais',PA:'Pará',PB:'Paraíba',PR:'Paraná',PE:'Pernambuco',PI:'Piauí',RN:'Rio Grande do Norte',RS:'Rio Grande do Sul',RJ:'Rio de Janeiro',RO:'Rondônia',RR:'Roraima',SC:'Santa Catarina',SP:'São Paulo',SE:'Sergipe',TO:'Tocantins',IM:'Importação'};
+
+// Colunas (destino), na mesma ordem: AC AL AM AP BA CE DF ES GO MA MT MS MG PA PB PR PE PI RN RS RJ RO RR SC SP SE TO IM
+// Fonte: Aliquotas_ICMS.xlsx (coluna "Alíquota ICMS (%)"; destino EX = IM)
+const MATRIZ_ICMS = {
+  AC: [19,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,4],
+  AL: [12,20,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,4],
+  AM: [12,12,20,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,4],
+  AP: [12,12,12,18,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,4],
+  BA: [12,12,12,12,20,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,4],
+  CE: [12,12,12,12,12,20,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,4],
+  DF: [12,12,12,12,12,12,20,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,4],
+  ES: [12,12,12,12,12,12,12,17,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,4],
+  GO: [12,12,12,12,12,12,12,12,19,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,4],
+  MA: [12,12,12,12,12,12,12,12,12,23,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,4],
+  MT: [12,12,12,12,12,12,12,12,12,12,17,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,4],
+  MS: [12,12,12,12,12,12,12,12,12,12,12,17,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,4],
+  MG: [7,7,7,7,7,7,7,7,7,7,7,7,18,7,7,12,7,7,7,12,12,7,7,12,12,7,7,4],
+  PA: [12,12,12,12,12,12,12,12,12,12,12,12,12,19,12,12,12,12,12,12,12,12,12,12,12,12,12,4],
+  PB: [12,12,12,12,12,12,12,12,12,12,12,12,12,12,20,12,12,12,12,12,12,12,12,12,12,12,12,4],
+  PR: [7,7,7,7,7,7,7,7,7,7,7,7,12,7,7,19,7,7,7,12,12,7,7,12,12,7,7,4],
+  PE: [12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,20,12,12,12,12,12,12,12,12,12,12,4],
+  PI: [12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,22,12,12,12,12,12,12,12,12,12,4],
+  RN: [12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,20,12,12,12,12,12,12,12,12,4],
+  RS: [7,7,7,7,7,7,7,7,7,7,7,7,12,7,7,12,7,7,7,17,12,7,7,12,12,7,7,7],
+  RJ: [7,7,7,7,7,7,7,7,7,7,7,7,12,7,7,12,7,7,7,12,20,7,7,12,12,7,7,7],
+  RO: [12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,19,12,12,12,12,12,4],
+  RR: [12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,20,12,12,12,12,4],
+  SC: [7,7,7,7,7,7,7,7,7,7,7,7,12,7,7,12,7,7,7,12,12,7,7,17,12,7,7,7],
+  SP: [7,7,7,7,7,7,7,7,7,7,7,7,12,7,7,12,7,7,7,12,12,7,7,12,18,7,7,4],
+  SE: [12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,19,12,4],
+  TO: [12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,20,4],
+  IM: [4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4],
+};
+
+function montarTabela(){
+  const lista = [...UFS, 'IM'];
+  const t = {};
+  Object.keys(MATRIZ_ICMS).forEach(o => {
+    t[o] = {};
+    lista.forEach((dest, i) => t[o][dest] = MATRIZ_ICMS[o][i]);
+  });
+  return t;
+}
+
+const ALIQUOTAS = montarTabela();
+
+const PIS_COFINS = 0.0925;
+const MARGEM_MINIMA = 0.08;
+
+const otmInput = document.getElementById('otm');
+const motoristaInput = document.getElementById('motorista');
+const origemSel = document.getElementById('origem');
+const destinoInput = document.getElementById('destino');
+const destinoList = document.getElementById('destinoList');
+const aliquotaPill = document.getElementById('aliquotaPill');
+const breakdown = document.getElementById('breakdown');
+const resultBreakdown = document.getElementById('resultBreakdown');
+const statusPanel = document.getElementById('statusPanel');
+const btnLight = document.getElementById('btnLight');
+const btnDark = document.getElementById('btnDark');
+
+function parseNum(str){
+  if(!str) return NaN;
+  const cleaned = str.replace(/\./g,'').replace(',', '.').replace(/[^\d.-]/g,'');
+  return parseFloat(cleaned);
+}
+
+function fmt(n){
+  if(isNaN(n)) return '—';
+  return n.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+}
+
+function fmtPct(n){
+  if(isNaN(n)) return '—';
+  return n.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}) + '%';
+}
+
+function fmtAliq(v){
+  return v.toLocaleString('pt-BR', {maximumFractionDigits: 2}) + '%';
+}
+
+function setTheme(theme){
+  document.body.setAttribute('data-theme', theme);
+  btnLight.classList.toggle('active', theme === 'light');
+  btnDark.classList.toggle('active', theme === 'dark');
+  try{ localStorage.setItem('gruposlos-theme', theme); }catch(e){}
+}
+
+btnLight.addEventListener('click', () => setTheme('light'));
+btnDark.addEventListener('click', () => setTheme('dark'));
+
+(function initTheme(){
+  let saved = 'light';
+  try{ saved = localStorage.getItem('gruposlos-theme') || 'light'; }catch(e){}
+  setTheme(saved);
+})();
+
+function optionLabel(uf, estados){
+  return `${uf} — ${fmtAliq(estados[uf])}`;
+}
+
+function populateOrigem(){
+  [...UFS, 'IM'].forEach(uf => {
+    const opt = document.createElement('option');
+    opt.value = uf;
+    opt.textContent = `${uf} (${NOMES_UF[uf]})`;
+    origemSel.appendChild(opt);
+  });
+  origemSel.value = 'RJ';
+}
+
+function populateDestino(){
+  const origem = origemSel.value;
+  const estados = ALIQUOTAS[origem];
+  destinoList.innerHTML = '';
+  Object.keys(estados).forEach(uf => {
+    const opt = document.createElement('option');
+    opt.value = optionLabel(uf, estados);
+    destinoList.appendChild(opt);
+  });
+  // Mantém o destino digitado se ainda existir para a nova origem, senão usa o primeiro
+  const ufAtual = extrairUF(destinoInput.value, estados);
+  const primeiraUF = Object.keys(estados)[0];
+  destinoInput.value = ufAtual ? optionLabel(ufAtual, estados) : optionLabel(primeiraUF, estados);
+  calcular();
+}
+
+function extrairUF(texto, estados){
+  if(!texto) return null;
+  const digitado = texto.trim().toUpperCase();
+  const ufDireto = digitado.split(/[\s—-]/)[0];
+  if(estados.hasOwnProperty(ufDireto)) return ufDireto;
+  return null;
+}
+
+function calcular(){
+  const otm = parseNum(otmInput.value);
+  const motorista = parseNum(motoristaInput.value);
+  const origem = origemSel.value;
+  const estados = ALIQUOTAS[origem];
+  const destino = extrairUF(destinoInput.value, estados);
+
+  if(!destino){
+    aliquotaPill.textContent = 'ICMS: —';
+    breakdown.innerHTML = '';
+    resultBreakdown.innerHTML = '';
+    statusPanel.className = 'status-panel';
+    statusPanel.innerHTML = `
+      <div class="status-top"><div class="dot"></div><div class="status-title">Destino não encontrado</div></div>
+      <div class="status-detail">Digite ou selecione um estado válido da lista.</div>`;
+    return;
+  }
+
+  const icmsPct = estados[destino] / 100;
+
+  aliquotaPill.textContent = `ICMS ${origem} → ${destino}: ${fmtAliq(estados[destino])}`;
+
+  if(isNaN(otm) || otm <= 0){
+    breakdown.innerHTML = '';
+    resultBreakdown.innerHTML = '';
+    statusPanel.className = 'status-panel';
+    statusPanel.innerHTML = `
+      <div class="status-top"><div class="dot"></div><div class="status-title">Preencha os campos</div></div>
+      <div class="status-detail">Informe o valor OTM para calcular.</div>`;
+    return;
+  }
+
+  // Frete Bruto = OTM ÷ (1 - alíquota ICMS)
+  const freteBruto = otm / (1 - icmsPct);
+  const valorICMS = freteBruto * icmsPct;
+  const valorPisCofins = freteBruto * PIS_COFINS;
+
+  breakdown.innerHTML = `
+    <div class="row"><span class="label">Valor OTM</span><span class="value">${fmt(otm)}</span></div>
+    <div class="row total"><span class="label">Frete Bruto</span><span class="value">${fmt(freteBruto)}</span></div>
+    <div class="row"><span class="label">Valor ICMS (${fmtAliq(estados[destino])})</span><span class="value">${fmt(valorICMS)}</span></div>
+    <div class="row"><span class="label">Pis/Cofins (9,25%)</span><span class="value">${fmt(valorPisCofins)}</span></div>
+  `;
+
+  if(isNaN(motorista) || motorista <= 0){
+    resultBreakdown.innerHTML = '';
+    statusPanel.className = 'status-panel';
+    statusPanel.innerHTML = `
+      <div class="status-top"><div class="dot"></div><div class="status-title">Falta o valor do motorista</div></div>
+      <div class="status-detail">Informe quanto pretende pagar ao motorista (valor carreteiro) para ver a margem.</div>`;
+    return;
+  }
+
+  // Frete Líquido = Frete Bruto - (ICMS + Pis/Cofins + Valor Carreteiro)
+  const freteLiquido = freteBruto - (valorICMS + valorPisCofins + motorista);
+  const margemValor = freteLiquido;
+  const margemPct = (margemValor / freteBruto) * 100;
+
+  resultBreakdown.innerHTML = `
+    <div class="row"><span class="label">Frete Bruto</span><span class="value">${fmt(freteBruto)}</span></div>
+    <div class="row"><span class="label">Valor Carreteiro (pago)</span><span class="value">${fmt(motorista)}</span></div>
+    <div class="row total"><span class="label">Frete Líquido (margem em R$)</span><span class="value">${fmt(freteLiquido)}</span></div>
+  `;
+
+  let statusClass, title, detail;
+  if(margemValor < 0){
+    statusClass = 'bad';
+    title = 'Margem negativa';
+    detail = `Pagando ${fmt(motorista)} ao motorista, a operação fica no vermelho. Reduza o valor pago ou revise o OTM.`;
+  } else if(margemPct < MARGEM_MINIMA * 100){
+    statusClass = 'warn';
+    title = 'Margem positiva, abaixo da meta';
+    detail = `A margem está positiva, mas abaixo dos 8% mínimos de referência.`;
+  } else {
+    statusClass = 'good';
+    title = 'Margem dentro da meta';
+    detail = `A margem atende ou supera os 8% mínimos de referência.`;
+  }
+
+  statusPanel.className = `status-panel ${statusClass}`;
+  statusPanel.innerHTML = `
+    <div class="status-top"><div class="dot"></div><div class="status-title">${title}</div></div>
+    <div class="big-number">${fmtPct(margemPct)}</div>
+    <div class="status-detail">${detail}</div>
+  `;
+}
+
+otmInput.addEventListener('input', calcular);
+motoristaInput.addEventListener('input', calcular);
+origemSel.addEventListener('change', populateDestino);
+destinoInput.addEventListener('input', calcular);
+
+const tabBtnCalc = document.getElementById('tabBtnCalc');
+const tabBtnAliq = document.getElementById('tabBtnAliq');
+const tabCalculadora = document.getElementById('tabCalculadora');
+const tabAliquotas = document.getElementById('tabAliquotas');
+
+const tabBtnSpot = document.getElementById('tabBtnSpot');
+const tabSpot = document.getElementById('tabSpot');
+
+function setTab(tab){
+  [[tabBtnCalc, tabCalculadora, 'calc'], [tabBtnAliq, tabAliquotas, 'aliq'], [tabBtnSpot, tabSpot, 'spot']]
+    .forEach(([btn, painel, nome]) => {
+      btn.classList.toggle('active', tab === nome);
+      painel.classList.toggle('active', tab === nome);
+    });
+}
+
+tabBtnCalc.addEventListener('click', () => setTab('calc'));
+tabBtnAliq.addEventListener('click', () => setTab('aliq'));
+tabBtnSpot.addEventListener('click', () => setTab('spot'));
+
+function renderAliquotasTable(){
+  const container = document.getElementById('aliqTables');
+  const lista = [...UFS, 'IM'];
+  const head = '<tr><th class="canto"><b>ORIGEM</b>DESTINO</th>' + lista.map(d => `<th data-col="${d}">${d}</th>`).join('') + '</tr>';
+  const body = lista.map(o =>
+    `<tr data-uf="${o.toLowerCase()}"><th>${o}</th>` +
+    lista.map(d => {
+      const v = ALIQUOTAS[o][d];
+      const cls = (o === d && o !== 'IM') ? 'interna' : (v === 4 ? 'imp' : (v === 7 ? 'sete' : ''));
+      return `<td class="${cls}" data-o="${o}" data-d="${d}" title="${o} → ${d}: ${fmtAliq(v)}">${v.toLocaleString('pt-BR')}</td>`;
+    }).join('') + '</tr>'
+  ).join('');
+
+  container.innerHTML = `
+    <div class="card matriz-wrap">
+      <h2>ICMS — Origem (linha) × Destino (coluna)</h2>
+      <div class="matriz-scroll">
+        <table class="matriz"><thead>${head}</thead><tbody>${body}</tbody></table>
+      </div>
+      <div class="matriz-legenda">
+        <span><i class="lg interna"></i> Alíquota interna</span>
+        <span><i class="lg sete"></i> 7%</span>
+        <span><i class="lg" style="background:var(--hl)"></i> Rota selecionada</span>
+        <span>* RJ: 18% + 2% de FECP · Clique numa célula para destacar a rota</span>
+      </div>
+    </div>`;
+
+  const tabela = container.querySelector('.matriz');
+
+  // Clique: seleciona a rota (linha da origem + coluna do destino)
+  tabela.addEventListener('click', e => {
+    const td = e.target.closest('td[data-o]');
+    if(!td) return;
+    selecionarRota(td.dataset.o, td.dataset.d);
+  });
+
+  // Passar o mouse: sombreia a linha e a coluna da célula
+  tabela.addEventListener('mouseover', e => {
+    const td = e.target.closest('td[data-o]');
+    tabela.querySelectorAll('td.hv').forEach(c => c.classList.remove('hv'));
+    if(!td) return;
+    tabela.querySelectorAll(`td[data-o="${td.dataset.o}"], td[data-d="${td.dataset.d}"]`).forEach(c => c.classList.add('hv'));
+  });
+  tabela.addEventListener('mouseleave', () => {
+    tabela.querySelectorAll('td.hv').forEach(c => c.classList.remove('hv'));
+  });
+}
+
+// ===== Seleção de rota na aba de alíquotas =====
+const selOrigemAliq = document.getElementById('selOrigemAliq');
+const selDestinoAliq = document.getElementById('selDestinoAliq');
+const aliqResultado = document.getElementById('aliqResultado');
+const aliqRota = document.getElementById('aliqRota');
+const aliqValor = document.getElementById('aliqValor');
+
+[...UFS, 'IM'].forEach(uf => {
+  [selOrigemAliq, selDestinoAliq].forEach(sel => {
+    const opt = document.createElement('option');
+    opt.value = uf;
+    opt.textContent = `${uf} (${NOMES_UF[uf]})`;
+    sel.appendChild(opt);
+  });
+});
+
+function destacar(){
+  const o = selOrigemAliq.value;
+  const d = selDestinoAliq.value;
+  const tabela = document.querySelector('#aliqTables .matriz');
+  tabela.querySelectorAll('.sel, .cruz').forEach(c => c.classList.remove('sel', 'cruz'));
+
+  if(o){
+    tabela.querySelectorAll(`td[data-o="${o}"]`).forEach(c => c.classList.add('sel'));
+    tabela.querySelector(`tr[data-uf="${o.toLowerCase()}"] th`).classList.add('sel');
+  }
+  if(d){
+    tabela.querySelectorAll(`td[data-d="${d}"]`).forEach(c => c.classList.add('sel'));
+    tabela.querySelector(`th[data-col="${d}"]`).classList.add('sel');
+  }
+  if(o && d){
+    const cel = tabela.querySelector(`td[data-o="${o}"][data-d="${d}"]`);
+    cel.classList.add('cruz');
+    cel.scrollIntoView({block: 'nearest', inline: 'center', behavior: 'smooth'});
+    aliqRota.textContent = `${o} (${NOMES_UF[o]}) → ${d} (${NOMES_UF[d]})`;
+    aliqValor.textContent = fmtAliq(ALIQUOTAS[o][d]);
+    aliqResultado.classList.add('on');
+  } else {
+    aliqResultado.classList.remove('on');
+  }
+}
+
+function selecionarRota(o, d){
+  selOrigemAliq.value = o;
+  selDestinoAliq.value = d;
+  destacar();
+}
+
+selOrigemAliq.addEventListener('change', destacar);
+selDestinoAliq.addEventListener('change', destacar);
+
+document.getElementById('btnLimparAliq').addEventListener('click', () => selecionarRota('', ''));
+
+document.getElementById('btnUsarRota').addEventListener('click', () => {
+  const o = selOrigemAliq.value, d = selDestinoAliq.value;
+  if(!o || !d) return;
+  origemSel.value = o;
+  populateDestino();
+  destinoInput.value = optionLabel(d, ALIQUOTAS[o]);
+  calcular();
+  setTab('calc');
+});
+
+// Ao abrir a aba, já destaca a rota que está na calculadora
+tabBtnAliq.addEventListener('click', () => {
+  const d = extrairUF(destinoInput.value, ALIQUOTAS[origemSel.value]);
+  if(d) selecionarRota(origemSel.value, d);
+});
+
+// ===== Aba Frete Spot =====
+// Fator = 1 − (PIS/COFINS% + ICMS% + Margem%) / 100
+// Valor CTE = Motorista ÷ Fator · OTM = Valor CTE × (1 − ICMS%)
+const SPOT_MARGEM_PADRAO = 8;
+const SPOT_MARGEM_MINIMA = 1;
+const PIS_COFINS_PCT = PIS_COFINS * 100;
+
+const spotOrigem = document.getElementById('spotOrigem');
+const spotDestino = document.getElementById('spotDestino');
+const spotPill = document.getElementById('spotPill');
+const spotMotorista = document.getElementById('spotMotorista');
+const spotMargem = document.getElementById('spotMargem');
+const spotFator = document.getElementById('spotFator');
+const spotStatus = document.getElementById('spotStatus');
+const spotBreakdown = document.getElementById('spotBreakdown');
+let spotSincronizando = false;
+
+function fmtNum(n, casas){
+  if(isNaN(n)) return '—';
+  return n.toLocaleString('pt-BR', {minimumFractionDigits: casas, maximumFractionDigits: casas});
+}
+
+[...UFS, 'IM'].forEach(uf => {
+  [spotOrigem, spotDestino].forEach(sel => {
+    const opt = document.createElement('option');
+    opt.value = uf;
+    opt.textContent = `${uf} (${NOMES_UF[uf]})`;
+    sel.appendChild(opt);
+  });
+});
+spotOrigem.value = 'RJ';
+spotDestino.value = 'SP';
+
+function spotIcms(){
+  return ALIQUOTAS[spotOrigem.value][spotDestino.value];
+}
+
+function spotFatorDaMargem(){
+  if(spotSincronizando) return;
+  const margem = parseNum(spotMargem.value);
+  if(isNaN(margem)) return;
+  spotSincronizando = true;
+  spotFator.value = fmtNum((100 - (PIS_COFINS_PCT + spotIcms() + margem)) / 100, 4);
+  spotSincronizando = false;
+}
+
+function spotMargemDoFator(){
+  if(spotSincronizando) return;
+  const fator = parseNum(spotFator.value);
+  if(isNaN(fator)) return;
+  spotSincronizando = true;
+  spotMargem.value = fmtNum((1 - fator) * 100 - PIS_COFINS_PCT - spotIcms(), 2);
+  spotSincronizando = false;
+}
+
+function spotCalcular(){
+  const icms = spotIcms();
+  const icmsPct = icms / 100;
+  const motorista = parseNum(spotMotorista.value);
+  const fator = parseNum(spotFator.value);
+  const margem = parseNum(spotMargem.value);
+
+  spotPill.textContent = `ICMS ${spotOrigem.value} → ${spotDestino.value}: ${fmtAliq(icms)}`;
+
+  const aviso = (cls, titulo, texto) => {
+    spotBreakdown.innerHTML = '';
+    spotStatus.className = `status-panel ${cls}`;
+    spotStatus.innerHTML = `<div class="status-top"><div class="dot"></div><div class="status-title">${titulo}</div></div><div class="status-detail">${texto}</div>`;
+  };
+
+  if(isNaN(motorista) || motorista <= 0) return aviso('', 'Preencha os campos', 'Informe o valor a pagar ao motorista para calcular o OTM.');
+  if(isNaN(fator) || fator <= 0) return aviso('warn', 'Fator inválido', 'Informe a margem desejada ou o fator diretamente.');
+
+  const valorCTE = motorista / fator;
+  const otm = valorCTE * (1 - icmsPct);
+
+  spotBreakdown.innerHTML = `
+    <div class="row"><span class="label">Valor Carreteiro (motorista)</span><span class="value">${fmt(motorista)}</span></div>
+    <div class="row"><span class="label">PIS/COFINS (fixo)</span><span class="value">${fmtNum(PIS_COFINS_PCT, 2)}%</span></div>
+    <div class="row"><span class="label">Alíquota ICMS (${spotOrigem.value} → ${spotDestino.value})</span><span class="value">${fmtAliq(icms)}</span></div>
+    <div class="row"><span class="label">Margem</span><span class="value">${fmtPct(margem)}</span></div>
+    <div class="row"><span class="label">Fator utilizado</span><span class="value">${fmtNum(fator, 4)}</span></div>
+    <div class="row"><span class="label">Valor CTE (Motorista ÷ Fator)</span><span class="value">${fmt(valorCTE)}</span></div>
+    <div class="row total"><span class="label">OTM = Valor CTE × (1 − ICMS ${fmtAliq(icms)})</span><span class="value">${fmt(otm)}</span></div>
+  `;
+
+  let cls, titulo, texto;
+  if(isNaN(margem)){
+    cls = ''; titulo = 'Margem não identificada'; texto = 'Não foi possível calcular a margem com os valores atuais.';
+  } else if(margem < SPOT_MARGEM_MINIMA){
+    cls = 'bad'; titulo = 'Margem abaixo do mínimo liberado';
+    texto = `Sua margem é de ${fmtPct(margem)} — abaixo do piso de ${SPOT_MARGEM_MINIMA}% liberado pela empresa. Revise antes de lançar.`;
+  } else if(margem < SPOT_MARGEM_PADRAO){
+    cls = 'warn'; titulo = 'Margem abaixo do padrão';
+    texto = `Sua margem é de ${fmtPct(margem)} — abaixo do padrão de ${SPOT_MARGEM_PADRAO}%, mas dentro do liberado (mínimo ${SPOT_MARGEM_MINIMA}%). Vale confirmar se esse caso está autorizado.`;
+  } else {
+    cls = 'good'; titulo = 'Margem dentro do padrão';
+    texto = `Sua margem é de ${fmtPct(margem)} — dentro ou acima do padrão de ${SPOT_MARGEM_PADRAO}%.`;
+  }
+
+  spotStatus.className = `status-panel ${cls}`;
+  spotStatus.innerHTML = `
+    <div class="status-top"><div class="dot"></div><div class="status-title">${titulo}</div></div>
+    <div class="big-number otm">${fmt(otm)}</div>
+    <div class="status-detail">${texto}</div>`;
+}
+
+// Trocar origem/destino muda o ICMS: mantém a margem e recalcula o fator
+[spotOrigem, spotDestino].forEach(sel => sel.addEventListener('change', () => { spotFatorDaMargem(); spotCalcular(); }));
+spotMotorista.addEventListener('input', spotCalcular);
+spotMargem.addEventListener('input', () => { spotFatorDaMargem(); spotCalcular(); });
+spotFator.addEventListener('input', () => { spotMargemDoFator(); spotCalcular(); });
+
+spotFatorDaMargem();
+spotCalcular();
+
+populateOrigem();
+renderAliquotasTable();
+populateDestino();
+
+// ===== App instalável (PWA): funciona offline =====
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+</script>
+</body>
+</html>
