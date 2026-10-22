@@ -496,8 +496,7 @@
         </div>
         <div class="field">
           <label for="destino">Destino</label>
-          <input type="text" id="destino" list="destinoList" autocomplete="off" placeholder="Digite o estado...">
-          <datalist id="destinoList"></datalist>
+          <select id="destino"></select>
         </div>
       </div>
       <div class="aliquota-pill" id="aliquotaPill">ICMS: —</div>
@@ -658,7 +657,6 @@ const otmInput = document.getElementById('otm');
 const motoristaInput = document.getElementById('motorista');
 const origemSel = document.getElementById('origem');
 const destinoInput = document.getElementById('destino');
-const destinoList = document.getElementById('destinoList');
 const aliquotaPill = document.getElementById('aliquotaPill');
 const breakdown = document.getElementById('breakdown');
 const resultBreakdown = document.getElementById('resultBreakdown');
@@ -719,14 +717,16 @@ function populateOrigem(){
 function populateDestino(){
   const origem = origemSel.value;
   const estados = ALIQUOTAS[origem];
-  destinoList.innerHTML = '';
+  // Guarda o destino escolhido antes de recriar a lista
+  const ufAtual = extrairUF(destinoInput.value, estados);
+  destinoInput.innerHTML = '';
   Object.keys(estados).forEach(uf => {
     const opt = document.createElement('option');
     opt.value = optionLabel(uf, estados);
-    destinoList.appendChild(opt);
+    opt.textContent = `${uf} (${NOMES_UF[uf]}) — ${fmtAliq(estados[uf])}`;
+    destinoInput.appendChild(opt);
   });
-  // Mantém o destino digitado se ainda existir para a nova origem, senão usa o primeiro
-  const ufAtual = extrairUF(destinoInput.value, estados);
+  // Mantém o mesmo destino para a nova origem; se não houver, usa o primeiro
   const primeiraUF = Object.keys(estados)[0];
   destinoInput.value = ufAtual ? optionLabel(ufAtual, estados) : optionLabel(primeiraUF, estados);
   calcular();
@@ -830,7 +830,7 @@ function calcular(){
 otmInput.addEventListener('input', calcular);
 motoristaInput.addEventListener('input', calcular);
 origemSel.addEventListener('change', populateDestino);
-destinoInput.addEventListener('input', calcular);
+destinoInput.addEventListener('change', calcular);
 
 const tabBtnCalc = document.getElementById('tabBtnCalc');
 const tabBtnAliq = document.getElementById('tabBtnAliq');
