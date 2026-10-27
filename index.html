@@ -228,6 +228,8 @@
   .matriz td.interna{ background: var(--red); color: #fff; font-weight: 600; }
   .matriz td.sete{ background: rgba(46,125,91,0.15); }
   .matriz td.imp{ color: var(--text-soft); }
+  .matriz td.zero{ background: rgba(93,107,120,0.12); color: var(--text-soft); font-weight: 600; }
+  .matriz-legenda .lg.zero{ background: rgba(93,107,120,0.35); }
   .matriz-legenda{ display: flex; flex-wrap: wrap; gap: 14px; margin-top: 12px; font-size: 12px; color: var(--text-soft); }
   .matriz-legenda .lg{ display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: middle; margin-right: 4px; }
   .matriz-legenda .lg.interna{ background: var(--red); }
@@ -644,9 +646,15 @@ function montarTabela(){
   Object.keys(MATRIZ_ICMS).forEach(o => {
     t[o] = {};
     lista.forEach((dest, i) => t[o][dest] = MATRIZ_ICMS[o][i]);
+    t[o].ZR = 0; // Destino especial: ICMS zerado / isento
   });
   return t;
 }
+
+// Opção extra de destino (aparece só como destino, nunca como origem)
+NOMES_UF.ZR = 'ICMS zerado / isento';
+const DESTINOS = [...UFS, 'IM', 'ZR'];
+const rotulo = uf => uf === 'ZR' ? 'Isento' : uf;
 
 const ALIQUOTAS = montarTabela();
 
@@ -723,7 +731,7 @@ function populateDestino(){
   Object.keys(estados).forEach(uf => {
     const opt = document.createElement('option');
     opt.value = optionLabel(uf, estados);
-    opt.textContent = `${uf} (${NOMES_UF[uf]}) — ${fmtAliq(estados[uf])}`;
+    opt.textContent = uf === 'ZR' ? 'ICMS zerado / isento — 0%' : `${uf} (${NOMES_UF[uf]}) — ${fmtAliq(estados[uf])}`;
     destinoInput.appendChild(opt);
   });
   // Mantém o mesmo destino para a nova origem; se não houver, usa o primeiro
@@ -760,7 +768,7 @@ function calcular(){
 
   const icmsPct = estados[destino] / 100;
 
-  aliquotaPill.textContent = `ICMS ${origem} → ${destino}: ${fmtAliq(estados[destino])}`;
+  aliquotaPill.textContent = `ICMS ${origem} → ${rotulo(destino)}: ${fmtAliq(estados[destino])}`;
 
   if(isNaN(otm) || otm <= 0){
     breakdown.innerHTML = '';
@@ -855,12 +863,12 @@ tabBtnSpot.addEventListener('click', () => setTab('spot'));
 function renderAliquotasTable(){
   const container = document.getElementById('aliqTables');
   const lista = [...UFS, 'IM'];
-  const head = '<tr><th class="canto"><b>ORIGEM</b>DESTINO</th>' + lista.map(d => `<th data-col="${d}">${d}</th>`).join('') + '</tr>';
+  const head = '<tr><th class="canto"><b>ORIGEM</b>DESTINO</th>' + DESTINOS.map(d => `<th data-col="${d}" title="${NOMES_UF[d]}">${d === 'ZR' ? '0%' : d}</th>`).join('') + '</tr>';
   const body = lista.map(o =>
     `<tr data-uf="${o.toLowerCase()}"><th>${o}</th>` +
-    lista.map(d => {
+    DESTINOS.map(d => {
       const v = ALIQUOTAS[o][d];
-      const cls = (o === d && o !== 'IM') ? 'interna' : (v === 4 ? 'imp' : (v === 7 ? 'sete' : ''));
+      const cls = (o === d && o !== 'IM') ? 'interna' : (v === 0 ? 'zero' : (v === 4 ? 'imp' : (v === 7 ? 'sete' : '')));
       return `<td class="${cls}" data-o="${o}" data-d="${d}" title="${o} → ${d}: ${fmtAliq(v)}">${v.toLocaleString('pt-BR')}</td>`;
     }).join('') + '</tr>'
   ).join('');
@@ -874,6 +882,7 @@ function renderAliquotasTable(){
       <div class="matriz-legenda">
         <span><i class="lg interna"></i> Alíquota interna</span>
         <span><i class="lg sete"></i> 7%</span>
+        <span><i class="lg zero"></i> ICMS zerado / isento</span>
         <span><i class="lg" style="background:var(--hl)"></i> Rota selecionada</span>
         <span>* RJ: 18% + 2% de FECP · Clique numa célula para destacar a rota</span>
       </div>
@@ -907,11 +916,12 @@ const aliqResultado = document.getElementById('aliqResultado');
 const aliqRota = document.getElementById('aliqRota');
 const aliqValor = document.getElementById('aliqValor');
 
-[...UFS, 'IM'].forEach(uf => {
+DESTINOS.forEach(uf => {
   [selOrigemAliq, selDestinoAliq].forEach(sel => {
+    if(uf === 'ZR' && sel === selOrigemAliq) return;
     const opt = document.createElement('option');
     opt.value = uf;
-    opt.textContent = `${uf} (${NOMES_UF[uf]})`;
+    opt.textContent = uf === 'ZR' ? 'ICMS zerado / isento (0%)' : `${uf} (${NOMES_UF[uf]})`;
     sel.appendChild(opt);
   });
 });
@@ -934,7 +944,7 @@ function destacar(){
     const cel = tabela.querySelector(`td[data-o="${o}"][data-d="${d}"]`);
     cel.classList.add('cruz');
     cel.scrollIntoView({block: 'nearest', inline: 'center', behavior: 'smooth'});
-    aliqRota.textContent = `${o} (${NOMES_UF[o]}) → ${d} (${NOMES_UF[d]})`;
+    aliqRota.textContent = `${o} (${NOMES_UF[o]}) → ${d === 'ZR' ? 'ICMS zerado / isento' : d + ' (' + NOMES_UF[d] + ')'}`;
     aliqValor.textContent = fmtAliq(ALIQUOTAS[o][d]);
     aliqResultado.classList.add('on');
   } else {
@@ -991,11 +1001,12 @@ function fmtNum(n, casas){
   return n.toLocaleString('pt-BR', {minimumFractionDigits: casas, maximumFractionDigits: casas});
 }
 
-[...UFS, 'IM'].forEach(uf => {
+DESTINOS.forEach(uf => {
   [spotOrigem, spotDestino].forEach(sel => {
+    if(uf === 'ZR' && sel === spotOrigem) return;
     const opt = document.createElement('option');
     opt.value = uf;
-    opt.textContent = `${uf} (${NOMES_UF[uf]})`;
+    opt.textContent = uf === 'ZR' ? 'ICMS zerado / isento (0%)' : `${uf} (${NOMES_UF[uf]})`;
     sel.appendChild(opt);
   });
 });
@@ -1031,7 +1042,7 @@ function spotCalcular(){
   const fator = parseNum(spotFator.value);
   const margem = parseNum(spotMargem.value);
 
-  spotPill.textContent = `ICMS ${spotOrigem.value} → ${spotDestino.value}: ${fmtAliq(icms)}`;
+  spotPill.textContent = `ICMS ${spotOrigem.value} → ${rotulo(spotDestino.value)}: ${fmtAliq(icms)}`;
 
   const aviso = (cls, titulo, texto) => {
     spotBreakdown.innerHTML = '';
@@ -1048,7 +1059,7 @@ function spotCalcular(){
   spotBreakdown.innerHTML = `
     <div class="row"><span class="label">Valor Carreteiro (motorista)</span><span class="value">${fmt(motorista)}</span></div>
     <div class="row"><span class="label">PIS/COFINS (fixo)</span><span class="value">${fmtNum(PIS_COFINS_PCT, 2)}%</span></div>
-    <div class="row"><span class="label">Alíquota ICMS (${spotOrigem.value} → ${spotDestino.value})</span><span class="value">${fmtAliq(icms)}</span></div>
+    <div class="row"><span class="label">Alíquota ICMS (${spotOrigem.value} → ${rotulo(spotDestino.value)})</span><span class="value">${fmtAliq(icms)}</span></div>
     <div class="row"><span class="label">Margem</span><span class="value">${fmtPct(margem)}</span></div>
     <div class="row"><span class="label">Fator utilizado</span><span class="value">${fmtNum(fator, 4)}</span></div>
     <div class="row"><span class="label">Valor CTE (Motorista ÷ Fator)</span><span class="value">${fmt(valorCTE)}</span></div>
