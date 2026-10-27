@@ -1,5 +1,5 @@
 // Ao publicar uma versão nova, troque o número abaixo (v1 -> v2...) para os celulares atualizarem.
-const VERSAO = 'frete-los-v2';
+const VERSAO = 'frete-los-v3';
 const ARQUIVOS = [
   './', 'index.html', 'manifest.webmanifest', 'logo.png', 'fundo.jpg',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png',
